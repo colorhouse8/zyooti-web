@@ -36417,6 +36417,7 @@ if(a instanceof A.mB)s=a.a
 else s=a instanceof A.ir?a.a:J.dN(a)
 if(B.c.m(s,"not_priced"))return"\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0633\u0639\u0631\u0647 \u0628\u0639\u062f\u0647 \u0645\u0627 \u0646\u0632\u0644: "+B.b.gam(s.split(":"))
 if(B.c.m(s,"out_of_stock"))return"\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631\u0629: "+B.b.gam(s.split(":"))
+if(B.c.m(s,"invalid_quantity"))return"\u0627\u0644\u0643\u0645\u064a\u0629 \u063a\u064a\u0631 \u0635\u062d\u064a\u062d\u0629"
 if(B.c.m(s,"product_unavailable"))return"\u0623\u062d\u062f \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0644\u0645 \u064a\u0639\u062f \u0645\u062a\u0648\u0641\u0631\u0627\u064b"
 if(B.c.m(s,"invalid_name"))return"\u0627\u0643\u062a\u0628 \u0627\u0633\u0645\u0643"
 if(B.c.m(s,"invalid_phone"))return"\u0631\u0642\u0645 \u0627\u0644\u0645\u0648\u0628\u0627\u064a\u0644 \u0644\u0627\u0632\u0645 \u064a\u0628\u062f\u064a \u0628\u0640 07 \u0648\u064a\u0643\u0648\u0646 11 \u0631\u0642\u0645"
@@ -121817,8 +121818,8 @@ if(q!=null)r.push(A.ac("\u0634\u0631\u0627\u0621 "+($.eN().bW(q)+" \u062f.\u0639
 else r.push(B.ahb)
 r.push(A.ac("\u0628\u064a\u0639 "+($.eN().bW(m.z)+" \u062f.\u0639"),n,n,n,B.aga,n,n,n))
 q=m.ax
-p=q===0
-q=p?"\u0646\u0627\u0641\u062f":"\u0627\u0644\u0645\u062e\u0632\u0648\u0646 "+q
+p=q<0
+q=p?"\u0644\u0627\u0632\u0645 \u0646\u0634\u062a\u0631\u064a "+-q:"\u0628\u0627\u0644\u0645\u062e\u0632\u0646 "+q
 o=p?B.bA:B.bh
 r.push(A.ac(q,n,n,n,A.fl(n,n,o,n,n,n,n,n,n,n,n,n,n,n,p?B.bN:B.w,n,n,!0,n,n,n,n,n,n,n,n),n,n,n))
 k=A.cF(A.bD(A.b([k,j,B.fZ,A.ig(B.bb,r,B.dh,4,12)],s),B.aB,B.m,B.t),1)

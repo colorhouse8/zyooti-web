@@ -28,7 +28,7 @@
     html, body { margin: 0; height: 100%; background: #121216; }
     /* شاشة افتتاح بالشعار لحد ما يجهز التطبيق، بدل صفحة بيضاء */
     #splash {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
+      position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 18px;
       background: #121216; transition: opacity .35s ease; z-index: 9;
     }
@@ -48,14 +48,19 @@
       -webkit-tap-highlight-color: transparent;
     }
     #install {
-      position: fixed; z-index: 20; top: calc(10px + env(safe-area-inset-top)); left: 50%;
-      width: min(440px, calc(100% - 24px)); box-sizing: border-box;
-      display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px;
+      /* بدون min() و inset حتى يشتغل بالمتصفحات القديمة (Phoenix مال Infinix وغيره) */
+      position: fixed; z-index: 20; top: 10px; top: calc(10px + env(safe-area-inset-top)); left: 50%;
+      width: 92%; max-width: 440px; box-sizing: border-box;
+      display: -webkit-box; display: -webkit-flex;
+      display: flex; align-items: center; padding: 10px 10px 10px 12px;
       background: #1B1B21; border: 1px solid rgba(255,255,255,.09); border-radius: 18px;
       box-shadow: 0 12px 32px rgba(0,0,0,.45);
-      transform: translate(-50%, -140%); opacity: 0; transition: transform .35s ease, opacity .35s ease;
+      -webkit-transform: translate(-50%, -140%); transform: translate(-50%, -140%); opacity: 0;
+      transition: transform .35s ease, opacity .35s ease;
     }
-    #install.show { transform: translate(-50%, 0); opacity: 1; }
+    #install.show { -webkit-transform: translate(-50%, 0); transform: translate(-50%, 0); opacity: 1; }
+    #install > * { margin-left: 12px; }
+    #install > *:last-child { margin-left: 0; }
     #install img { width: 44px; height: 44px; border-radius: 12px; flex: none; }
     #install .txt { flex: 1; min-width: 0; line-height: 1.35; }
     #install .t1 { font-size: 15px; }
@@ -70,12 +75,12 @@
       color: #A3A3AF; font-size: 20px; line-height: 32px; padding: 0;
     }
     #install-help {
-      position: fixed; inset: 0; z-index: 21; display: none; align-items: flex-end; justify-content: center;
+      position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 21; display: none; align-items: flex-end; justify-content: center;
       background: rgba(0,0,0,.6);
     }
     #install-help.show { display: flex; }
     #install-help .sheet {
-      width: min(480px, 100%); box-sizing: border-box; background: #1B1B21; border-radius: 22px 22px 0 0;
+      width: 100%; max-width: 480px; box-sizing: border-box; background: #1B1B21; border-radius: 22px 22px 0 0;
       padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
     }
     #install-help h3 { margin: 0 0 14px; font-size: 18px; }
@@ -131,7 +136,8 @@
 
       var ua = navigator.userAgent;
       var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      var isAndroid = /Android/.test(ua);
+      // أي جهاز لمس يعتبر موبايل (بعض متصفحات Infinix/Tecno ما تكتب Android بالـ user agent)
+      var isMobile = /Android|Mobile/i.test(ua) || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       var inApp = /FBAN|FBAV|Instagram|Line\/|TikTok|Snapchat|wv\)/.test(ua); // متصفح داخل تطبيق ثاني
       var deferred = null, ready = false;
 
@@ -180,12 +186,15 @@
 
       // يطلع بعد ما يجهز التطبيق بشوية. بالموبايل يطلع دائماً (بالخطوات إذا المتصفح ما يدعم النافذة)،
       // وبالكمبيوتر بس إذا المتصفح يدعم التثبيت.
-      window.addEventListener('flutter-first-frame', function () {
+      function arm(delay) {
         setTimeout(function () {
           ready = true;
-          if (deferred || isIOS || isAndroid) show();
-        }, 2500);
-      });
+          if (deferred || isIOS || isMobile) show();
+        }, delay);
+      }
+      window.addEventListener('flutter-first-frame', function () { arm(2500); });
+      // احتياط: إذا إشارة Flutter ما وصلت (متصفح قديم أو بطيء)، يطلع بعد 8 ثواني من التحميل
+      window.addEventListener('load', function () { arm(8000); });
     })();
   </script>
   <script src="flutter_bootstrap.js" async></script>

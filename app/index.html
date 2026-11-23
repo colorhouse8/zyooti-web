@@ -40,6 +40,51 @@
     }
     @keyframes slide { 0% { transform: translateX(160%); } 100% { transform: translateX(-260%); } }
     #splash.hide { opacity: 0; pointer-events: none; }
+
+    /* زر "ثبّت التطبيق": يضيف زيوتي للشاشة الرئيسية كتطبيق (PWA) */
+    @font-face { font-family: 'TajawalWeb'; src: url('assets/assets/fonts/Tajawal-Bold.ttf') format('truetype'); font-weight: 700; }
+    #install, #install-help {
+      font-family: 'TajawalWeb', system-ui, sans-serif; direction: rtl; color: #F2F2F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #install {
+      position: fixed; z-index: 20; top: calc(10px + env(safe-area-inset-top)); left: 50%;
+      width: min(440px, calc(100% - 24px)); box-sizing: border-box;
+      display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px;
+      background: #1B1B21; border: 1px solid rgba(255,255,255,.09); border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.45);
+      transform: translate(-50%, -140%); opacity: 0; transition: transform .35s ease, opacity .35s ease;
+    }
+    #install.show { transform: translate(-50%, 0); opacity: 1; }
+    #install img { width: 44px; height: 44px; border-radius: 12px; flex: none; }
+    #install .txt { flex: 1; min-width: 0; line-height: 1.35; }
+    #install .t1 { font-size: 15px; }
+    #install .t2 { font-size: 12px; color: #A3A3AF; }
+    #install button { font: inherit; border: 0; cursor: pointer; }
+    #install .go {
+      flex: none; background: #C6F432; color: #121216; font-size: 14px;
+      padding: 10px 16px; border-radius: 12px;
+    }
+    #install .x {
+      flex: none; width: 32px; height: 32px; border-radius: 50%; background: transparent;
+      color: #A3A3AF; font-size: 20px; line-height: 32px; padding: 0;
+    }
+    #install-help {
+      position: fixed; inset: 0; z-index: 21; display: none; align-items: flex-end; justify-content: center;
+      background: rgba(0,0,0,.6);
+    }
+    #install-help.show { display: flex; }
+    #install-help .sheet {
+      width: min(480px, 100%); box-sizing: border-box; background: #1B1B21; border-radius: 22px 22px 0 0;
+      padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+    }
+    #install-help h3 { margin: 0 0 14px; font-size: 18px; }
+    #install-help ol { margin: 0; padding: 0 20px 0 0; font-size: 15px; line-height: 2; }
+    #install-help b { color: #C6F432; font-weight: 700; }
+    #install-help .ok {
+      display: block; width: 100%; margin-top: 18px; padding: 13px; border: 0; border-radius: 14px;
+      background: #C6F432; color: #121216; font: inherit; font-size: 15px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -55,6 +100,93 @@
       s.classList.add('hide');
       setTimeout(function () { s.remove(); }, 400);
     });
+  </script>
+  <div id="install" role="dialog" aria-label="تثبيت زيوتي">
+    <img src="icons/Icon-192.png" alt="">
+    <div class="txt">
+      <div class="t1">ثبّت زيوتي على موبايلك</div>
+      <div class="t2">يفتح مثل التطبيق من الشاشة الرئيسية</div>
+    </div>
+    <button class="go" type="button">تثبيت</button>
+    <button class="x" type="button" aria-label="إغلاق">×</button>
+  </div>
+  <div id="install-help">
+    <div class="sheet">
+      <h3>طريقة التثبيت</h3>
+      <ol id="install-steps"></ol>
+      <button class="ok" type="button">تمام</button>
+    </div>
+  </div>
+  <script>
+    // زر التثبيت (PWA). أندرويد/كروم: نافذة التثبيت الأصلية (beforeinstallprompt).
+    // آيفون (Safari) وباقي المتصفحات: خطوات "إضافة للشاشة الرئيسية".
+    (function () {
+      var KEY = 'zyooti_install_dismissed';
+      var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+      if (standalone) return;
+      try {
+        var t = Number(localStorage.getItem(KEY) || 0);
+        if (t && Date.now() - t < 3 * 24 * 3600 * 1000) return; // سكّره قبل أقل من 3 أيام
+      } catch (e) {}
+
+      var ua = navigator.userAgent;
+      var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var isAndroid = /Android/.test(ua);
+      var inApp = /FBAN|FBAV|Instagram|Line\/|TikTok|Snapchat|wv\)/.test(ua); // متصفح داخل تطبيق ثاني
+      var deferred = null, ready = false;
+
+      var bar = document.getElementById('install');
+      var help = document.getElementById('install-help');
+      var steps = document.getElementById('install-steps');
+
+      function show() { if (ready && !bar.classList.contains('show')) bar.classList.add('show'); }
+      function hide(remember) {
+        bar.classList.remove('show');
+        if (remember) { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} }
+      }
+      function openHelp() {
+        var s;
+        if (inApp) {
+          s = ['اضغط <b>⋮</b> أو <b>…</b> فوق', 'اختار <b>فتح بالمتصفح</b> (Chrome أو Safari)', 'وبعدين اضغط <b>تثبيت</b> من جديد'];
+        } else if (isIOS) {
+          s = ['اضغط زر المشاركة <b>⬆︎</b> بأسفل Safari', 'نزّل واختار <b>إضافة إلى الشاشة الرئيسية</b>', 'اضغط <b>إضافة</b>، وتطلع أيقونة زيوتي'];
+        } else {
+          s = ['اضغط <b>⋮</b> بأعلى المتصفح', 'اختار <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>', 'اضغط <b>تثبيت</b>، وتطلع أيقونة زيوتي'];
+        }
+        steps.innerHTML = s.map(function (x) { return '<li>' + x + '</li>'; }).join('');
+        help.classList.add('show');
+      }
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferred = e;
+        show();
+      });
+      window.addEventListener('appinstalled', function () { deferred = null; hide(true); });
+
+      bar.querySelector('.go').addEventListener('click', function () {
+        if (deferred) {
+          deferred.prompt();
+          deferred.userChoice.then(function (r) { if (r.outcome === 'accepted') hide(true); });
+          deferred = null;
+        } else {
+          openHelp();
+        }
+      });
+      bar.querySelector('.x').addEventListener('click', function () { hide(true); });
+      help.addEventListener('click', function (e) {
+        if (e.target === help || e.target.classList.contains('ok')) help.classList.remove('show');
+      });
+
+      // يطلع بعد ما يجهز التطبيق بشوية. بالموبايل يطلع دائماً (بالخطوات إذا المتصفح ما يدعم النافذة)،
+      // وبالكمبيوتر بس إذا المتصفح يدعم التثبيت.
+      window.addEventListener('flutter-first-frame', function () {
+        setTimeout(function () {
+          ready = true;
+          if (deferred || isIOS || isAndroid) show();
+        }, 2500);
+      });
+    })();
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
